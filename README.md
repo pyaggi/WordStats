@@ -33,13 +33,13 @@ I used openmp to parellize the process.
 
 Benjamin's graph algorithm: 22 minutes
 
-WordStats using all check alorithm: 25 minutes
+WordStats using **all check** algorithm: 25 minutes
 
-WordStats using parallel all check alorithm: 7.5 minutes
+WordStats using **parallel all check** algorithm: 7.5 minutes
 
-WordStats using graph algorithm: 6 minutes
+WordStats using **graph** algorithm: 6 minutes
 
-WordStats using parallel graph algorithm: 107 seconds
+WordStats using **parallel graph** algorithm: 107 seconds
 
 
 
