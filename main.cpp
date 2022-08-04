@@ -32,39 +32,36 @@ void algo_allCheck(std::ofstream &out,const std::chrono::system_clock::time_poin
     std::vector<std::tuple<int,int,int,int,int>> found;
     auto start1 = std::chrono::system_clock::now();
 
-    uint32_t *sigPtr0,*sigPtr1,*sigPtr2,*sigPtr3,*sigPtr4;
-    uint32_t sig0,sig1,sig2,sig3,sig4;
-    int c0,c1,c2,c3,c4;
-    sigPtr0=signatures.data();
-    for (c0=0;c0<wc5d;c0++)
+    auto sigPtr0=signatures.data();
+    for (auto c0=0;c0<wc5d;c0++)
     {
-        sig0=*sigPtr0;
+        auto sig0=*sigPtr0;
         sigPtr0++;
-        sigPtr1=sigPtr0;
-        for (c1=c0+1;c1<wc5d;c1++)
+        auto sigPtr1=sigPtr0;
+        for (auto c1=c0+1;c1<wc5d;c1++)
         {
-            sig1=sig0|*sigPtr1;
+            auto sig1=sig0|*sigPtr1;
             sigPtr1++;
             if (std::popcount(sig1)!=10)
                 continue;
-            sigPtr2=sigPtr1;
-            for (c2=c1+1;c2<wc5d;c2++)
+            auto sigPtr2=sigPtr1;
+            for (auto c2=c1+1;c2<wc5d;c2++)
             {
-                sig2=sig1|*sigPtr2;
+                auto sig2=sig1|*sigPtr2;
                 sigPtr2++;
                 if (std::popcount(sig2)!=15)
                     continue;
-                sigPtr3=sigPtr2;
-                for (c3=c2+1;c3<wc5d;c3++)
+                auto sigPtr3=sigPtr2;
+                for (auto c3=c2+1;c3<wc5d;c3++)
                 {
-                    sig3=sig2|*sigPtr3;
+                    auto sig3=sig2|*sigPtr3;
                     sigPtr3++;
                     if (std::popcount(sig3)!=20)
                         continue;
-                    sigPtr4=sigPtr3;
-                    for (c4=c3+1;c4<wc5d;c4++,sigPtr4++)
+                    auto sigPtr4=sigPtr3;
+                    for (auto c4=c3+1;c4<wc5d;c4++,sigPtr4++)
                     {
-                        sig4=sig3|*sigPtr4;
+                        auto sig4=sig3|*sigPtr4;
                         if (std::popcount(sig4)!=25)
                             continue;
                         found.push_back({c0,c1,c2,c3,c4});
@@ -76,6 +73,71 @@ void algo_allCheck(std::ofstream &out,const std::chrono::system_clock::time_poin
     }
     std::cout<<std::endl;
     reportTest("Check all",start,start1,found.size());
+
+    if (out.is_open())
+    {
+        for (auto &f:found)
+            out<<words[std::get<0>(f)]<<" "<<words[std::get<1>(f)]<<" "<<words[std::get<2>(f)]<<" "<<words[std::get<3>(f)]<<" "<<words[std::get<4>(f)]<<std::endl;
+    }
+
+}
+void algo_allCheck_par(std::ofstream &out,const std::chrono::system_clock::time_point &start)
+{
+    auto wc5d=words.size();
+    auto start1 = std::chrono::system_clock::now();
+
+    std::vector<std::tuple<int,int,int,int,int>> found;
+    #pragma omp parallel
+    {
+        std::vector<std::tuple<int,int,int,int,int>> foundpp;
+        #pragma omp for
+        for (auto c0=0;c0<wc5d;c0++)
+        {
+            auto sigPtr0=&signatures[c0];
+            auto sig0=*sigPtr0;
+            sigPtr0++;
+            auto sigPtr1=sigPtr0;
+            for (auto c1=c0+1;c1<wc5d;c1++)
+            {
+                auto sig1=sig0|*sigPtr1;
+                sigPtr1++;
+                if (std::popcount(sig1)!=10)
+                    continue;
+                auto sigPtr2=sigPtr1;
+                for (auto c2=c1+1;c2<wc5d;c2++)
+                {
+                    auto sig2=sig1|*sigPtr2;
+                    sigPtr2++;
+                    if (std::popcount(sig2)!=15)
+                        continue;
+                    auto sigPtr3=sigPtr2;
+                    for (auto c3=c2+1;c3<wc5d;c3++)
+                    {
+                        auto sig3=sig2|*sigPtr3;
+                        sigPtr3++;
+                        if (std::popcount(sig3)!=20)
+                            continue;
+                        auto sigPtr4=sigPtr3;
+                        for (auto c4=c3+1;c4<wc5d;c4++,sigPtr4++)
+                        {
+                            auto sig4=sig3|*sigPtr4;
+                            if (std::popcount(sig4)!=25)
+                                continue;
+                            foundpp.push_back({c0,c1,c2,c3,c4});
+                        }
+                    }
+                }
+            }
+//          #pragma master
+//          std::cout<<"*"<<std::flush;
+        }
+        #pragma omp critical
+        {
+            found.insert(found.end(),foundpp.begin(),foundpp.end());
+        }
+    }
+    std::cout<<std::endl;
+    reportTest("Check all parallel",start,start1,found.size());
 
     if (out.is_open())
     {
@@ -270,7 +332,7 @@ void algo_graph_par(std::ofstream &out,const std::chrono::system_clock::time_poi
         }
     }
     std::cout<<std::endl;
-    reportTest("Graph",start,start1,found.size());
+    reportTest("Graph parallel",start,start1,found.size());
     if (out.is_open())
     {
         for (auto &f:found)
@@ -282,10 +344,11 @@ int main(int argc, char *argv[])
 {
     if  (argc<3)
     {
-        std::cerr<<"Use: "<<argv[0]<<" word_list_file output_file [allcheck|graph]"<<std::endl;
+        std::cerr<<"Use: "<<argv[0]<<" word_list_file output_file [allcheck|graph|allcheck_par|graph_par]"<<std::endl;
         return -1;
     }
     bool allcheck=false;
+    bool allcheck_par=false;
     bool graph=false;
     bool graph_par=false;
     for (int ac=3;ac<argc;ac++)
@@ -293,12 +356,14 @@ int main(int argc, char *argv[])
         std::string_view a(argv[ac]);
         if (a=="allcheck")
             allcheck=true;
+        else if (a=="allcheck_par")
+            allcheck_par=true;
         else if (a=="graph")
             graph=true;
         else if (a=="graph_par")
             graph_par=true;
     }
-    bool tcount=allcheck|graph|graph_par;
+    bool tcount=allcheck|graph|graph_par|allcheck_par;
     if (!tcount)
         graph_par=true;
 
@@ -320,16 +385,25 @@ int main(int argc, char *argv[])
     processList(in,start);
     if (allcheck)
     {
+        std::cout<<"Perfoming all check algorithm"<<std::endl;
         algo_allCheck(out,start);
+        out.close();
+    }
+    if (allcheck_par)
+    {
+        std::cout<<"Perfoming all check parallel algorithm"<<std::endl;
+        algo_allCheck_par(out,start);
         out.close();
     }
     if (graph)
     {
+        std::cout<<"Perfoming graph algorithm"<<std::endl;
         algo_graph(out,start);
         out.close();
     }
     if (graph_par)
     {
+        std::cout<<"Perfoming graph paralell algorithm"<<std::endl;
         algo_graph_par(out,start);
         out.close();
     }
