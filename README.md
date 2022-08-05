@@ -21,7 +21,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 This program is inspired by the [A problem squared podcast](https://aproblemsquared.libsyn.com/) (finding five English words with 25 distinct characters) by Hill and Parker, and by the great [solution proposed by Benjamin Paassen](https://gitlab.com/bpaassen/five_clique).
 
-I was wondering if it would be possible to improve both aproches, Parker's and Benjamin's. So I came out with two main factors to work with:
+I was wondering if it would be possible to improve both approaches, Parker's and Benjamin's. So I came out with two main factors to work with:
 
 1. Make a better letter colission check.
 I solved this using a signature for every word, the signature is 32bit integer with each bit corresponding to a letter in the word. Then any kind of check is performed on those signatures and not in the string.
@@ -31,7 +31,9 @@ I used openmp to parellize the process.
 
 ## Results
 
-Benjamin's graph algorithm: 22 minutes
+Matt's **all check** algorithm: >30 days
+
+Benjamin's **graph** algorithm: 22 minutes
 
 WordStats using **all check** algorithm: 25 minutes
 
