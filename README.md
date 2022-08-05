@@ -24,7 +24,7 @@ This program is inspired by the [A problem squared podcast](https://aproblemsqua
 I was wondering if it would be possible to improve both approaches, Parker's and Benjamin's. So I came out with two main factors to work with:
 
 1. Make a better letter colission check.
-I solved this using a signature for every word, the signature is 32bit integer with each bit corresponding to a letter in the word. Then any kind of check is performed on those signatures and not in the string.
+I solved this using a signature for every word, the signature is a 32bit integer with each bit corresponding to a letter in the word. Then any kind of check is performed on those signatures and not in the string.
 
 2. Parallelize the algorithms.
 I used openmp to parellize the process.
